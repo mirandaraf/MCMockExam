@@ -4,6 +4,7 @@ import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -18,15 +19,15 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
-    ArrayAdapter adapter;
+    AlbumAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        adapter = new ArrayAdapter<String>(this,
-                R.layout.activity_list_textview);
+        adapter = new AlbumAdapter(this,
+                0);
 
         ListView listView = (ListView) findViewById(R.id.album_list);
         listView.setAdapter(adapter);
@@ -43,9 +44,20 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    private class GetAlbumsTask extends AsyncTask<Void, Void, String[]> {
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.get_albums) {
+            GetAlbumsTask task = new GetAlbumsTask();
+            task.execute();
+        }
 
-        protected String[] doInBackground(Void... voids) {
+        return true;
+    }
+
+
+    private class GetAlbumsTask extends AsyncTask<Void, Void, Album[]> {
+
+        protected Album[] doInBackground(Void... voids) {
             String albumJsonStr = null;
 
             // Get JSON from REST API
@@ -114,12 +126,14 @@ public class MainActivity extends AppCompatActivity {
             try {
                 JSONArray albumJsonArray = new JSONArray(albumJsonStr);
 
-                String[] albumArray = new String[albumJsonArray.length()];
+                Album[] albumArray = new Album[albumJsonArray.length()];
 
                 for (int i = 0; i < albumJsonArray.length(); i++) {
                     JSONObject albumJson = (JSONObject) albumJsonArray.get(i);
 
-                    albumArray[i] = albumJson.getString("title");
+                    Album album = new Album();
+                    album.setTitle(albumJson.getString("title"));
+                    albumArray[i] = album;
                 }
 
                 return albumArray;
@@ -128,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        protected void onPostExecute(String[] albums) {
+        protected void onPostExecute(Album[] albums) {
             adapter.clear();
 
             adapter.addAll(albums);
